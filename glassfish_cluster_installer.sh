@@ -8,15 +8,18 @@ export GLASSFISH_VERSION=4.1
 export GLASSFISH_INSTALLE_FILE=glassfish-${GLASSFISH_VERSION}.zip
 export GLASSFISH_BASE_URL="http://download.oracle.com/glassfish/${GLASSFISH_VERSION}/release/${GLASSFISH_INSTALLE_FILE}"
 export GLASSFISH_LOCAL_INSTALLER="/home/xtecuan/Java/installers/glassfish-${GLASSFISH_VERSION}.zip"
-export ZULU_JDK_VERSION="zulu7.56.0.11-ca-jdk7.0.352-linux_x64"
+#export ZULU_JDK_VERSION="zulu7.56.0.11-ca-jdk7.0.352-linux_x64"
+export ZULU_JDK_VERSION="zulu8.68.0.21-ca-jdk8.0.362-linux_x64"
 export ZULU_LOCAL_INSTALLER="/home/xtecuan/Java/installers/${ZULU_JDK_VERSION}.tar.gz"
-export JAVA_VERSION=7
+#export JAVA_VERSION=7
+export JAVA_VERSION=8
 export ZULU_JDK_URL="https://cdn.azul.com/zulu/bin/${ZULU_JDK_VERSION}.tar.gz"
 export GUSER="glassfish4"
 export GUSER_HOME="/home/${GUSER}"
 export GUSER_TERMINAL="/bin/bash"
 export TEMPORAL_DIR="/tmp"
 export BASE_INSTALL_DIR="/usr/share"
+export GLASSFISH_DOMAIN="xtesoft1"
 
 setupGlassfishUser() {
     response=$(getent passwd ${GUSER})
@@ -62,16 +65,39 @@ downloadZuluJDKInstaller() {
     fi
 }
 
+
+
 installGlassfish(){
     if [ -d "${BASE_INSTALL_DIR}/${GUSER}" ]
     then
         sudo rm -rfv ${BASE_INSTALL_DIR}/${GUSER}
     else
         sudo unzip ${TEMPORAL_DIR}/glassfish-${GLASSFISH_VERSION}.zip -d ${BASE_INSTALL_DIR}/
-        sudo chown -R ${GUSER}: ${BASE_INSTALL_DIR}/${GUSER}
+        sudo sh -c "echo \"AS_JAVA=${BASE_INSTALL_DIR}/jdk${JAVA_VERSION}\" >> ${BASE_INSTALL_DIR}/${GUSER}/glassfish/config/asenv.conf"        
+        sudo chown -R ${GUSER}: ${BASE_INSTALL_DIR}/${GUSER} 
+        
         echo "Glassfish Installer ready to use!"
     fi
 }
+
+configureGlassfishUser(){
+    sudo sh -c "echo \"export JAVA_HOME=${BASE_INSTALL_DIR}/jdk${JAVA_VERSION}\" >> ${GUSER_HOME}/.bashrc"
+    sudo sh -c "echo \"export GLASSFISH_HOME=${BASE_INSTALL_DIR}/${GUSER}\" >> ${GUSER_HOME}/.bashrc"
+    mystring='export PATH=\$JAVA_HOME/bin:\$GLASSFISH_HOME/bin:\$PATH'
+    sudo sh -c "echo \"${mystring}\" >> ${GUSER_HOME}/.bashrc"
+    sudo passwd ${GUSER}
+}
+
+configureGlassfishDomain(){
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin list-domains"
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin delete-domain domain1"
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin create-domain --savelogin $GLASSFISH_DOMAIN "
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin start-domain $GLASSFISH_DOMAIN"
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin enable-secure-admin"
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin stop-domain $GLASSFISH_DOMAIN"
+    sudo -u ${GUSER} sh -c "${BASE_INSTALL_DIR}/${GUSER}/bin/asadmin start-domain $GLASSFISH_DOMAIN"
+}
+
 
 installZuluJDK(){
     if [ -d "${BASE_INSTALL_DIR}/${ZULU_JDK_VERSION}" ]
@@ -107,6 +133,8 @@ fi
 setupGlassfishUser
 installZuluJDK
 installGlassfish
+configureGlassfishUser
+configureGlassfishDomain
 
 
 
