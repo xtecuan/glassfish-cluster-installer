@@ -18,8 +18,8 @@ export GUSER="glassfish4"
 export GUSER_HOME="/home/${GUSER}"
 export GUSER_TERMINAL="/bin/bash"
 export TEMPORAL_DIR="/tmp"
-export BASE_INSTALL_DIR="/usr/share"
-export GLASSFISH_DOMAIN="xtesoft1"
+export BASE_INSTALL_DIR="/opt"
+export GLASSFISH_DOMAIN="spiCDC"
 
 setupGlassfishUser() {
     response=$(getent passwd ${GUSER})
@@ -73,9 +73,9 @@ installGlassfish(){
         sudo rm -rfv ${BASE_INSTALL_DIR}/${GUSER}
     else
         sudo unzip ${TEMPORAL_DIR}/glassfish-${GLASSFISH_VERSION}.zip -d ${BASE_INSTALL_DIR}/
-        sudo sh -c "echo \"AS_JAVA=${BASE_INSTALL_DIR}/jdk${JAVA_VERSION}\" >> ${BASE_INSTALL_DIR}/${GUSER}/glassfish/config/asenv.conf"        
-        sudo chown -R ${GUSER}: ${BASE_INSTALL_DIR}/${GUSER} 
-        
+        sudo sh -c "echo \"AS_JAVA=${BASE_INSTALL_DIR}/jdk${JAVA_VERSION}\" >> ${BASE_INSTALL_DIR}/${GUSER}/glassfish/config/asenv.conf"
+        sudo chown -R ${GUSER}: ${BASE_INSTALL_DIR}/${GUSER}
+
         echo "Glassfish Installer ready to use!"
     fi
 }
@@ -135,6 +135,3 @@ installZuluJDK
 installGlassfish
 configureGlassfishUser
 configureGlassfishDomain
-
-
-
